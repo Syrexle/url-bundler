@@ -1,0 +1,690 @@
+<meta charset="utf-8">
+<title>Ledger Line</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #e6e2d6;
+    --surface: #f6f3ea;
+    --surface-sunken: #dcd7c7;
+    --border: #c9c2ac;
+    --border-strong: #a89f88;
+    --text: #17150f;
+    --text-muted: #55503f;
+    --text-faint: #8a8370;
+    --accent: #1c58b0;
+    --accent-ink: #134588;
+    --red: #c2001f;
+    --yellow: #967000;
+    --green: #00863f;
+    --good: #00863f;
+    --bad: #c2001f;
+    --ring: rgba(28,88,176,0.22);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #050506;
+      --surface: #0e0e11;
+      --surface-sunken: #08080a;
+      --border: #232328;
+      --border-strong: #38383f;
+      --text: #eceef0;
+      --text-muted: #8f8f97;
+      --text-faint: #55555c;
+      --accent: #3d7fe6;
+      --accent-ink: #6b9eef;
+      --red: #e4002b;
+      --yellow: #ffcd00;
+      --green: #00a94f;
+      --good: #00a94f;
+      --bad: #e4002b;
+      --ring: rgba(61,127,230,0.32);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #050506;
+    --surface: #0e0e11;
+    --surface-sunken: #08080a;
+    --border: #232328;
+    --border-strong: #38383f;
+    --text: #eceef0;
+    --text-muted: #8f8f97;
+    --text-faint: #55555c;
+    --accent: #3d7fe6;
+    --accent-ink: #6b9eef;
+    --red: #e4002b;
+    --yellow: #ffcd00;
+    --green: #00a94f;
+    --good: #00a94f;
+    --bad: #e4002b;
+    --ring: rgba(61,127,230,0.32);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", monospace; }
+
+  .page {
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  header.masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 44px;
+  }
+  .wordmark {
+    font-family: "Rajdhani", "IBM Plex Sans", sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wordmark .chips { display: inline-flex; gap: 3px; }
+  .wordmark .chips span {
+    width: 7px; height: 7px; border-radius: 1px;
+    display: inline-block;
+  }
+  .tagline {
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: "Rajdhani", "IBM Plex Sans", sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: 0.005em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .lede {
+    color: var(--text-muted);
+    font-size: 14.5px;
+    margin: 0 0 32px;
+    max-width: 50ch;
+  }
+
+  /* ---- shared field styling (fixes broken-looking inputs) ---- */
+  label.field-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    display: block;
+    margin-bottom: 7px;
+  }
+  input[type="text"], input[type="url"], textarea {
+    width: 100%;
+    display: block;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    color: var(--text);
+    font: inherit;
+    padding: 11px 12px;
+    outline: none;
+  }
+  input[type="text"]::placeholder, input[type="url"]::placeholder, textarea::placeholder {
+    color: var(--text-faint);
+  }
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+
+  .field { margin-bottom: 22px; }
+
+  /* ---- line editor ---- */
+  .rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+  .row {
+    display: grid;
+    grid-template-columns: 22px 1fr 30px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .row-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bg);
+    border-radius: 2px;
+    align-self: center;
+    width: 22px;
+    height: 22px;
+  }
+  .row-num.c0 { background: var(--red); }
+  .row-num.c1 { background: var(--yellow); }
+  .row-num.c2 { background: var(--green); }
+  .row-num.c3 { background: var(--accent); }
+
+  .row-fields {
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--surface-sunken);
+    overflow: hidden;
+  }
+  .row-fields input {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 12px;
+  }
+  .row-fields input:focus { box-shadow: none; background: var(--surface); }
+  .row-fields .row-label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .row-fields .row-url { font-size: 14px; }
+  .row-fields:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+  .row-remove {
+    width: 30px;
+    align-self: stretch;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .row-remove:hover { color: var(--bad); border-color: var(--bad); }
+
+  .row-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 14px 0 28px;
+  }
+  .add-row {
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .add-row:hover { color: var(--accent-ink); }
+
+  .paste-toggle {
+    border: none;
+    background: none;
+    color: var(--text-faint);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .paste-toggle:hover { color: var(--text-muted); }
+
+  textarea.paste-area {
+    min-height: 110px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    resize: vertical;
+    margin-bottom: 28px;
+  }
+
+  .seal-btn {
+    width: 100%;
+    border: none;
+    border-radius: 3px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+  }
+  :root:not([data-theme="light"]) .seal-btn,
+  :root[data-theme="dark"] .seal-btn { color: #050506; }
+  .seal-btn:hover { background: var(--accent-ink); }
+  .seal-btn:disabled { background: var(--border-strong); color: var(--text-faint); cursor: not-allowed; }
+
+  .result { margin-top: 20px; display: none; }
+  .result.show { display: block; }
+  .result-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+  .link-row { display: flex; gap: 8px; align-items: stretch; }
+  .link-row input {
+    flex: 1;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+  }
+  .copy-btn {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 0 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--good); color: var(--good); }
+  .result-hint { font-size: 12px; color: var(--text-faint); margin-top: 9px; }
+
+  /* ---- view mode ---- */
+  .receipt-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .entries { border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .entry {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 4px;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+  }
+  .entry:hover .entry-label { color: var(--accent); }
+  .entry-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bg);
+    border-radius: 2px;
+    width: 22px;
+    height: 22px;
+  }
+  .entry-num.c0 { background: var(--red); }
+  .entry-num.c1 { background: var(--yellow); }
+  .entry-num.c2 { background: var(--green); }
+  .entry-num.c3 { background: var(--accent); }
+  .entry-text { min-width: 0; }
+  .entry-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-url {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-go {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+
+  .open-all-btn {
+    width: 100%;
+    border: none;
+    border-radius: 3px;
+    background: var(--accent);
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    color: var(--bg);
+  }
+  :root:not([data-theme="light"]) .open-all-btn,
+  :root[data-theme="dark"] .open-all-btn { color: #050506; }
+  .open-all-btn:hover { background: var(--accent-ink); }
+  .popup-hint {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 10px;
+    text-align: center;
+  }
+  .new-bundle-link {
+    display: inline-block;
+    margin-top: 30px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border-strong);
+  }
+  .new-bundle-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  footer {
+    margin-top: 48px;
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: "IBM Plex Mono", monospace;
+    letter-spacing: 0.02em;
+  }
+
+  [hidden] { display: none !important; }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <span class="wordmark">
+      <span class="chips"><span style="background:var(--red)"></span><span style="background:var(--yellow)"></span><span style="background:var(--green)"></span><span style="background:var(--accent)"></span></span>
+      Ledger Line
+    </span>
+    <span class="tagline">one link, many tx</span>
+  </header>
+
+  <!-- CREATE VIEW -->
+  <div id="create-view">
+    <h1>Bundle your transactions into one link</h1>
+    <p class="lede">Drop in every explorer link for a payout — six swaps across an epoch, a batch of claims, whatever made the row. Get back one link. Log that. It expands to the full list when opened.</p>
+
+    <div class="field">
+      <label class="field-label" for="bundle-title">Row label (optional)</label>
+      <input type="text" id="bundle-title" placeholder="e.g. Epoch 214 rewards">
+    </div>
+
+    <div id="rows" class="rows"></div>
+
+    <div class="row-actions">
+      <button class="add-row" id="add-row" type="button">+ add line</button>
+      <button class="paste-toggle" id="paste-toggle" type="button">paste a list instead</button>
+    </div>
+
+    <div id="paste-block" class="field" hidden>
+      <label class="field-label">Paste URLs (one per line)</label>
+      <textarea class="paste-area" id="paste-area" placeholder="https://basescan.org/tx/0xabc...&#10;https://basescan.org/tx/0xdef...&#10;https://arbiscan.io/tx/0x123..."></textarea>
+    </div>
+
+    <button class="seal-btn" id="seal-btn" type="button" disabled>Generate bundle link</button>
+
+    <div class="result" id="result">
+      <div class="result-label">Your bundle link</div>
+      <div class="link-row">
+        <input type="text" id="result-link" readonly>
+        <button class="copy-btn" id="copy-btn" type="button">Copy</button>
+      </div>
+      <div class="result-hint">Paste this into your spreadsheet cell. Nothing is stored on a server — the links live inside the URL itself.</div>
+    </div>
+  </div>
+
+  <!-- VIEW MODE -->
+  <div id="view-view" hidden>
+    <h1 id="view-title">Bundled transactions</h1>
+    <p class="lede" id="view-lede">Everything logged under this row.</p>
+
+    <div class="receipt-meta">
+      <span id="entry-count">0 links</span>
+      <span>decoded locally</span>
+    </div>
+    <div class="entries" id="entries"></div>
+
+    <button class="open-all-btn" id="open-all-btn" type="button">Open all in new tabs</button>
+    <p class="popup-hint">Your browser may block some tabs after the first few — allow popups for this page if that happens.</p>
+
+    <a href="#" class="new-bundle-link" id="new-bundle-link">&larr; start a new bundle</a>
+  </div>
+
+  <footer>no accounts &middot; no server storage &middot; the link is the database</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function toBase64Url(str) {
+    var b64 = btoa(unescape(encodeURIComponent(str)));
+    return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function fromBase64Url(str) {
+    var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return decodeURIComponent(escape(atob(b64)));
+  }
+
+  function isLikelyUrl(v) {
+    if (!v) return false;
+    return /^https?:\/\/\S+\.\S+/i.test(v.trim());
+  }
+
+  var CHIP_CLASSES = ["c0", "c1", "c2", "c3"];
+
+  // ---------------- CREATE VIEW ----------------
+  var rowsEl = document.getElementById("rows");
+  var addRowBtn = document.getElementById("add-row");
+  var sealBtn = document.getElementById("seal-btn");
+  var titleInput = document.getElementById("bundle-title");
+  var pasteToggle = document.getElementById("paste-toggle");
+  var pasteBlock = document.getElementById("paste-block");
+  var pasteArea = document.getElementById("paste-area");
+  var resultBox = document.getElementById("result");
+  var resultLink = document.getElementById("result-link");
+  var copyBtn = document.getElementById("copy-btn");
+
+  var rowCount = 0;
+
+  function makeRow(label, url) {
+    var chip = CHIP_CLASSES[rowCount % 4];
+    rowCount++;
+    var row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML =
+      '<span class="row-num ' + chip + '"></span>' +
+      '<div class="row-fields">' +
+        '<input type="text" class="row-label" placeholder="label (optional) — e.g. AERO/USDC swap">' +
+        '<input type="url" class="row-url" placeholder="https://basescan.org/tx/0x...">' +
+      '</div>' +
+      '<button type="button" class="row-remove" title="Remove line">&times;</button>';
+    row.querySelector(".row-label").value = label || "";
+    row.querySelector(".row-url").value = url || "";
+    row.querySelector(".row-remove").addEventListener("click", function () {
+      row.remove();
+      validate();
+    });
+    row.querySelector(".row-url").addEventListener("input", validate);
+    rowsEl.appendChild(row);
+    return row;
+  }
+
+  function currentRows() {
+    return Array.prototype.map.call(rowsEl.querySelectorAll(".row"), function (row) {
+      return {
+        label: row.querySelector(".row-label").value.trim(),
+        url: row.querySelector(".row-url").value.trim()
+      };
+    });
+  }
+
+  function validate() {
+    var rows = currentRows().filter(function (r) { return r.url; });
+    var anyBadUrl = rows.some(function (r) { return !isLikelyUrl(r.url); });
+    sealBtn.disabled = rows.length === 0 || anyBadUrl;
+    resultBox.classList.remove("show");
+  }
+
+  addRowBtn.addEventListener("click", function () { makeRow(); validate(); });
+
+  pasteToggle.addEventListener("click", function () {
+    var showing = !pasteBlock.hasAttribute("hidden");
+    if (showing) {
+      pasteBlock.setAttribute("hidden", "");
+      pasteToggle.textContent = "paste a list instead";
+    } else {
+      pasteBlock.removeAttribute("hidden");
+      pasteToggle.textContent = "use the line editor instead";
+      pasteArea.focus();
+    }
+  });
+
+  pasteArea.addEventListener("input", function () {
+    var lines = pasteArea.value.split(/\n+/).map(function (l) { return l.trim(); }).filter(Boolean);
+    sealBtn.disabled = lines.length === 0 || lines.some(function (l) { return !isLikelyUrl(l); });
+    resultBox.classList.remove("show");
+  });
+
+  sealBtn.addEventListener("click", function () {
+    var items;
+    if (!pasteBlock.hasAttribute("hidden") && pasteArea.value.trim()) {
+      items = pasteArea.value.split(/\n+/).map(function (l) { return l.trim(); }).filter(Boolean)
+        .map(function (u) { return ["", u]; });
+    } else {
+      items = currentRows().filter(function (r) { return r.url; })
+        .map(function (r) { return [r.label, r.url]; });
+    }
+    if (!items.length) return;
+
+    var payload = { t: titleInput.value.trim(), i: items };
+    var encoded = toBase64Url(JSON.stringify(payload));
+    var base = location.origin + location.pathname;
+    var link = base + "#" + encoded;
+
+    resultLink.value = link;
+    resultBox.classList.add("show");
+    copyBtn.textContent = "Copy";
+    copyBtn.classList.remove("copied");
+  });
+
+  copyBtn.addEventListener("click", function () {
+    resultLink.select();
+    resultLink.setSelectionRange(0, resultLink.value.length);
+    navigator.clipboard.writeText(resultLink.value).then(function () {
+      copyBtn.textContent = "Copied";
+      copyBtn.classList.add("copied");
+    }).catch(function () {
+      document.execCommand("copy");
+      copyBtn.textContent = "Copied";
+      copyBtn.classList.add("copied");
+    });
+  });
+
+  // seed with three blank rows to start
+  makeRow(); makeRow(); makeRow();
+
+  // ---------------- VIEW MODE ----------------
+  var createView = document.getElementById("create-view");
+  var viewView = document.getElementById("view-view");
+  var viewTitle = document.getElementById("view-title");
+  var viewLede = document.getElementById("view-lede");
+  var entriesEl = document.getElementById("entries");
+  var entryCount = document.getElementById("entry-count");
+  var openAllBtn = document.getElementById("open-all-btn");
+  var newBundleLink = document.getElementById("new-bundle-link");
+
+  function hostOf(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); }
+    catch (e) { return url; }
+  }
+
+  function renderView() {
+    var hash = location.hash.replace(/^#/, "");
+    if (!hash) {
+      createView.hidden = false;
+      viewView.hidden = true;
+      return;
+    }
+    var data;
+    try {
+      data = JSON.parse(fromBase64Url(hash));
+      if (!data || !Array.isArray(data.i) || !data.i.length) throw new Error("empty");
+    } catch (e) {
+      createView.hidden = false;
+      viewView.hidden = true;
+      return;
+    }
+
+    createView.hidden = true;
+    viewView.hidden = false;
+
+    viewTitle.textContent = data.t ? data.t : "Bundled transactions";
+    viewLede.textContent = data.t
+      ? "Everything logged under this row — " + data.i.length + " link" + (data.i.length === 1 ? "" : "s") + "."
+      : "Everything logged under this row.";
+    entryCount.textContent = data.i.length + " link" + (data.i.length === 1 ? "" : "s");
+
+    entriesEl.innerHTML = "";
+    data.i.forEach(function (pair, idx) {
+      var label = pair[0], url = pair[1];
+      var chip = CHIP_CLASSES[idx % 4];
+      var a = document.createElement("a");
+      a.className = "entry";
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.innerHTML =
+        '<span class="entry-num ' + chip + '">' + (idx + 1) + '</span>' +
+        '<span class="entry-text">' +
+          '<span class="entry-label">' + (label ? escapeHtml(label) : hostOf(url)) + '</span><br>' +
+          '<span class="entry-url">' + escapeHtml(url) + '</span>' +
+        '</span>' +
+        '<span class="entry-go">open &rarr;</span>';
+      entriesEl.appendChild(a);
+    });
+
+    openAllBtn.onclick = function () {
+      data.i.forEach(function (pair, idx) {
+        setTimeout(function () { window.open(pair[1], "_blank", "noopener,noreferrer"); }, idx * 120);
+      });
+    };
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  newBundleLink.addEventListener("click", function (e) {
+    e.preventDefault();
+    history.pushState("", document.title, location.pathname + location.search);
+    renderView();
+  });
+
+  window.addEventListener("hashchange", renderView);
+  renderView();
+})();
+</script>
